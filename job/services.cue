@@ -139,12 +139,13 @@ _#ServiceWithDefaults: {
 		GroupName: string
 	}
 
-	Y=out: #Service & {
-		if Y.TaskName == "" {
+	out: #Service & {
+		TaskName: _
+		if TaskName == "" {
 			Name: #Service.Name | *"\(X.JobName)-\(X.GroupName)"
 		}
-		if Y.TaskName != "" {
-			Name: #Service.Name | *"\(X.JobName)-\(X.GroupName)-\(Y.TaskName)"
+		if TaskName != "" {
+			Name: #Service.Name | *"\(X.JobName)-\(X.GroupName)-\(TaskName)"
 		}
 	}
 }

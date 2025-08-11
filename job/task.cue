@@ -50,7 +50,7 @@ import "time"
 	Name:  string
 	Count: uint
 	Constraints: [...#Constraint] | *null
-	Tasks: [...#Task]
+	Tasks: [#Task, ...#Task]
 	Volumes: [label=string]: #VolumeRequest & {Name: label}
 	RestartPolicy: #RestartPolicy | *null
 	EphemeralDisk: #EphemeralDisk | *null
@@ -76,15 +76,17 @@ _#TaskGroupWithDefaults: {
 		JobType: "service" | "system" | "batch" | "sysbatch"
 	}
 
-	Y=out: #TaskGroup & {
+	out: #TaskGroup & {
+		groupName=Name: _
+
 		Services: [...(_#ServiceWithDefaults & {in: {
 			JobName:   X.JobName
-			GroupName: Y.Name
+			GroupName: groupName
 		}}).out] | *null
 
 		Tasks: [...(_#TaskWithDefaults & {in: {
 			JobName:   X.JobName
-			GroupName: Y.Name
+			GroupName: groupName
 		}}).out]
 
 		if (X.JobType == "service" || X.JobType == "system") {
@@ -162,8 +164,8 @@ _#TaskGroupWithDefaults: {
 	Constraints: [...#Constraint] | *null
 	Env: {[string]: string} | *null
 	Services: [...#Service & {
-		Checks: [...{
-			#ServiceCheck
+		TaskName: taskName
+		Checks: [...#ServiceCheck & {
 			TaskName: taskName
 		}] | *null
 	}] | *null
@@ -186,7 +188,7 @@ _#TaskWithDefaults: {
 	}
 
 	out: #Task & {
-		Services: [...(_#ServiceWithDefaults & {in: X})] | *null
+		Services: [...(_#ServiceWithDefaults & {in: X}).out] | *null
 	}
 }
 
