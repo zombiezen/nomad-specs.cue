@@ -16,27 +16,42 @@
 
 package job
 
+// https://developer.hashicorp.com/nomad/docs/job-specification/resources
 // https://github.com/hashicorp/nomad/blob/v1.10.3/api/resources.go#L11-L29
 #Resources: {
 	// CPU is the CPU required to run this task in MHz.
-	CPU:   (uint & >=1) | *100
-	Cores: uint | *0
+	CPU: (uint & >=1) | *100 | null
+	// Cores is the number of CPU cores to reserve specifically for the task.
+	Cores: uint | *null
 	// MemoryMB is the memory required to run this task in MiB.
 	MemoryMB:     (uint & >=10) | *300
 	MemoryMaxMB?: uint & >=MemoryMB
-	Networks: [...#NetworkResource]
+	// TODO(maybe): DiskMB
+	// TODO(maybe): Networks
+	// TODO(someday): Devices
+	// TODO(someday): NUMA
 	SecretsMB?: uint
+
+	if CPU != null {
+		Cores: null
+	}
+	if Cores != null {
+		CPU: null
+	}
 }
 
+// https://developer.hashicorp.com/nomad/docs/job-specification/network#port-parameters
 // https://github.com/hashicorp/nomad/blob/v1.10.3/api/resources.go#L147-L153
 #Port: {
-	Label:           string
+	Label: string
+	// Value specifies the static TCP/UDP port to allocate.
 	Value?:          int
 	To?:             int
 	HostNetwork?:    string
 	IgnoreCollision: bool | *false
 }
 
+// https://developer.hashicorp.com/nomad/docs/job-specification/network#dns-parameters
 // https://github.com/hashicorp/nomad/blob/v1.10.3/api/resources.go#L155-L159
 #DNSConfig: {
 	Servers: [...string]
@@ -46,21 +61,18 @@ package job
 
 // NetworkResource is used to describe required network
 // resources of a given task.
+// https://developer.hashicorp.com/nomad/docs/job-specification/network
 // https://github.com/hashicorp/nomad/blob/v1.10.3/api/resources.go#L164-L182
 #NetworkResource: {
-	Mode:   string | *""
-	Device: string | *""
-	CIDR:   string | *""
-	IP:     string | *""
-	DNS:    #DNSConfig | *null
-	ReservedPorts: [...#Port] | *null
-	DynamicPorts: [...#Port] | *null
-	Hostname: string | *""
+	Mode: "none" | "bridge" | *"host" | =~"^cni/"
+	DNS:  #DNSConfig | *null
+	DynamicPorts: [...#Port]
 
 	CNI: {
 		Args: [string]: string
 	} | *null
 
-	// Deprecated.
-	MBits: int | *null
+	if Mode == "bridge" {
+		Hostname: string
+	}
 }

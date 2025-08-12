@@ -16,11 +16,12 @@
 
 package job
 
+// https://developer.hashicorp.com/nomad/docs/job-specification/scaling
 // https://github.com/hashicorp/nomad/blob/v1.10.3/api/scaling.go#L69-L86
 #ScalingPolicy: {
-	Min: int64
-	Max: int64
+	Min: int64 & >=0
+	Max: int64 & >=0
 	Policy: [string]: _
 	Enabled: bool | *true
-	Type:    string
+	Type:    "horizontal"
 }

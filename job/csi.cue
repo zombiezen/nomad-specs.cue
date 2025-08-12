@@ -16,25 +16,9 @@
 
 package job
 
-// https://github.com/hashicorp/nomad/blob/v1.10.3/api/constraint.go
-#Constraint: {
-	// LTarget is the name or reference of the attribute to examine for the constraint.
-	LTarget: string
-	// RTarget is the value to compare the attribute against using the specified operation.
-	RTarget: string
-	Operand: *"=" |
-		"!=" |
-		">" |
-		">=" |
-		"<" |
-		"<=" |
-		"distinct_hosts" |
-		"distinct_property" |
-		"regexp" |
-		"set_contains" |
-		"set_contains_any" |
-		"version" |
-		"semver" |
-		"is_set" |
-		"is_not_set"
+// https://developer.hashicorp.com/nomad/docs/job-specification/volume#mount_options
+// https://github.com/hashicorp/nomad/blob/v1.10.3/api/csi.go#L240-L253
+#CSIMountOptions: {
+	FSType?: string
+	MountFlags: [...string]
 }

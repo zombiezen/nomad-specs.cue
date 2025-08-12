@@ -24,8 +24,11 @@ import (
 // https://developer.hashicorp.com/nomad/docs/job-specification/check_restart
 // https://github.com/hashicorp/nomad/blob/v1.10.3/api/services.go#L135-L141
 #CheckRestart: {
+	// TODO(maybe): Nomad allows groups to pass partial fields and those will be merged with the job policy.
+	// CUE lets us do this more cleanly, so I'd prefer to specify the whole object.
+
 	Limit:          uint | *0
-	Grace:          int64 | *(1 * time.Second)
+	Grace:          #Duration | *(1 * time.Second)
 	IgnoreWarnings: bool | *false
 }
 
@@ -33,64 +36,50 @@ import (
 // https://developer.hashicorp.com/nomad/docs/job-specification/check
 // https://github.com/hashicorp/nomad/blob/v1.10.3/api/services.go#L200-L229
 #ServiceCheck: {
-	Name:    string
-	Type:    "http" | "tcp" | "grpc" | "script"
-	Command: string | *""
-	Args: [...string] | *null
-	Path:          string | *""
-	Protocol:      "http" | "https" | ""
-	PortLabel:     string | *""
-	Expose:        bool | *false
-	AddressMode:   *"auto" | "alloc" | "driver" | "host"
-	Advertise:     string | *""
-	Interval:      int64 & >=(1 * time.Second)
-	Timeout:       int64 & >=(1 * time.Second)
-	InitialStatus: *"" | "passing" | "warning" | "critical"
-	Notes:         string | *""
-	TLSServerName: string | *""
-	TLSSkipVerify: bool | *false
-	Header: {[string]: [...string]} | *null
-	Method:                 string | *""
-	CheckRestart:           #CheckRestart | *null
-	GRPCService:            string | *""
-	GRPCUseTLS:             bool | *false
-	TaskName:               string
-	SuccessBeforePassing:   int | *0
-	FailuresBeforeCritical: int | *0
-	FailuresBeforeWarning:  int | *0
-	Body:                   string | *""
-	OnUpdate:               *"require_healthy" | "ignore_warnings" | "ignore"
+	Name:           string
+	Type:           "http" | "tcp" | "grpc" | "script"
+	PortLabel?:     string
+	Expose:         bool | *false
+	AddressMode:    "alloc" | "driver" | *"host"
+	Interval:       #Duration & >=(1 * time.Second)
+	Timeout:        #Duration & >=(1 * time.Second)
+	InitialStatus?: "passing" | "warning" | "critical"
+	CheckRestart:   #CheckRestart | *null
+	TaskName:       string
+	OnUpdate:       *"require_healthy" | "ignore_warnings" | "ignore"
 
 	if Type == "script" {
-		SuccessBeforePassing:   0
-		FailuresBeforeCritical: 0
-		FailuresBeforeWarning:  0
+		Command: string
+		Args: [...string]
 	}
 
 	if Type != "script" {
-		Command: ""
-		Args:    null
+		SuccessBeforePassing:   int | *0
+		FailuresBeforeCritical: int | *0
+		FailuresBeforeWarning:  int | *0
 	}
 
-	if Type != "grpc" {
-		GRPCService: ""
-		GRPCUseTLS:  false
+	if Type == "grpc" {
+		GRPCService: string | *""
+		GRPCUseTLS:  bool | *false
+
+		if GRPCUseTLS {
+			TLSServerName?: string
+			TLSSkipVerify:  bool | *false
+		}
 	}
 
 	if Type == "http" {
 		Protocol: *"http" | "https"
-	}
+		Header: {[string]: [...string]} | *null
+		Method: string | *""
+		Path:   string
+		Body:   string | *""
 
-	if Type != "http" {
-		Header:   null
-		Body:     ""
-		Path:     ""
-		Protocol: ""
-	}
-
-	if !(Protocol == "https" || (Type == "grpc" && GRPCUseTLS)) {
-		TLSServerName: ""
-		TLSSkipVerify: false
+		if Protocol == "https" {
+			TLSServerName?: string
+			TLSSkipVerify:  bool | *false
+		}
 	}
 }
 
@@ -99,37 +88,44 @@ import (
 // https://github.com/hashicorp/nomad/blob/v1.10.3/api/services.go#L231-L260
 #Service: {
 	serviceName=Name: string
-	Tags: [...string] | *null
-	CanaryTags: [...string] | *null
+	Tags: [...string]
+	CanaryTags: [...string]
 	EnableTagOverride: bool | *false
-	PortLabel:         string | *""
-	AddressMode:       string | *""
-	Address:           string | *""
+	PortLabel?:        string
+	AddressMode:       *"auto" | "alloc" | "driver" | "host"
 	Checks: [...#ServiceCheck & {
 		Name:     string | *"service: \(strconv.Quote(serviceName)) check"
 		TaskName: serviceTaskName
-	}] | *null
+	}]
 	CheckRestart: #CheckRestart | *null
-	Meta: {[string]: string} | *null
-	CanaryMeta: {[string]: string} | *null
+	Meta: {[string]: string}
+	CanaryMeta: {[string]: string}
 	TaggedAddresses: {[string]: string} | *null
 	serviceTaskName=TaskName: string
 	OnUpdate:                 *"require_healthy" | "ignore_warnings" | "ignore"
-	Identity:                 #WorkloadIdentity | *null
-	Weights:                  #ServiceWeights | *null
 
 	Provider: *"consul" | "nomad"
-	Kind:     string | *""
+
+	if Provider == "consul" {
+		Cluster:  string | *"default"
+		Weights:  #ServiceWeights
+		Kind?:    string
+		Identity: #WorkloadIdentity | *null
+		// TODO(someday): Connect
+	}
 
 	if Provider != "consul" {
-		Weights: null
 		Checks: [...#ServiceCheck & {
+			// TODO(soon): Forbid InitialStatus.
 			Type:                   "http" | "tcp"
-			InitialStatus:          ""
 			SuccessBeforePassing:   0
 			FailuresBeforeCritical: 0
 			FailuresBeforeWarning:  0
-		}] | *null
+		}]
+	}
+
+	if AddressMode == "auto" {
+		Address?: string
 	}
 }
 
