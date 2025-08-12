@@ -73,6 +73,6 @@ package job
 	} | *null
 
 	if Mode == "bridge" {
-		Hostname: string
+		Hostname?: string
 	}
 }
