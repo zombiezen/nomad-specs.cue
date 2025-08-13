@@ -357,7 +357,7 @@ _#TaskWithDefaults: {
 	ChangeMode: "noop" | *"restart" | "signal" | "script"
 	Once:       bool | *false
 	Splay:      #Duration | *(5 * time.Second)
-	Perms:      string | *"0644"
+	Perms:      =~"^[0-7]{1,4}$" | *"0644"
 	Uid:        int | *null
 	Gid:        int | *null
 	LeftDelim:  string | *"{{"
