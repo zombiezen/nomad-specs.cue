@@ -313,6 +313,10 @@ _#TaskGroupWithDefaults: {
 	Identities: [...#WorkloadIdentity]
 	Actions: [...#Action]
 	Schedule: #TaskSchedule | *null
+
+	if Driver == "docker" {
+		Config: #DockerTaskConfig
+	}
 }
 
 _#TaskWithDefaults: {
