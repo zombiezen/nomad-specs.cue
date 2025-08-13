@@ -59,7 +59,7 @@ import "time"
 		}
 	}
 	if Type == "batch" || Type == "sysbatch" {
-		Update: null
+		Update:  null
 		Migrate: null
 	}
 }

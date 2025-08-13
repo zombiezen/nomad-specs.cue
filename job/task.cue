@@ -49,9 +49,9 @@ import "time"
 		RenderTemplates: false
 	}
 
-	service: servicePolicy
-	system: servicePolicy
-	batch: batchPolicy
+	service:  servicePolicy
+	system:   servicePolicy
+	batch:    batchPolicy
 	sysbatch: batchPolicy
 }
 
