@@ -81,7 +81,7 @@ import (
 	pid_mode?:     "host"
 	ports: [...string]
 	privileged:         bool | *false
-	image_pull_timeout: #Duration | *(5 * time.Minute)
+	image_pull_timeout: (string & time.Duration) | *"5m"
 	readonly_rootfs:    bool | *false
 	security_opt: [...string]
 	shm_size?: uint
