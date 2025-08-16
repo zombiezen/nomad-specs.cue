@@ -105,7 +105,8 @@ import "time"
 		Unlimited: false
 	}
 
-	[_ & !="service" & !="batch"]: null
+	"system": null
+	"sysbatch": null
 }
 
 // The Affinity block allows operators to express placement preference for a set of nodes.
